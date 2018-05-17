@@ -34,6 +34,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/signer/v4"
+
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/jacobsa/fuse"
@@ -312,6 +314,15 @@ func (fs *Goofys) detectBucketLocationByHEAD() (err error, isAws bool) {
 		return
 	}
 
+	if fs.v2Signer {
+		// TODO
+	} else {
+		signer := v4.NewSigner(fs.awsConfig.Credentials, nil)
+		_, err = signer.Sign(req, nil, fs.s3.ServiceName, fs.s3.SigningRegion, time.Now().Add(-time.Minute))
+		if err != nil {
+			return
+		}
+	}
 	allowFails := 3
 	for i := 0; i < allowFails; i++ {
 		resp, err = http.DefaultTransport.RoundTrip(req)
